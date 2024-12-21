@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8"> <!-- تعیین مجموعه کاراکترها به UTF-8 -->
+    <title>GeoServer Image Map</title> <!-- عنوان صفحه -->
+    <style>
+        body {
+            display: flex; /* استفاده از فلکس باکس برای چیدمان */
+            justify-content: center; /* مرکز کردن محتوا به صورت افقی */
+            align-items: center; /* مرکز کردن محتوا به صورت عمودی */
+            height: 100vh; /* ارتفاع کل صفحه */
+            margin: 0; /* حذف فاصله‌های پیش‌فرض */
+            background-color: #f0f0f0; /* رنگ پس‌زمینه صفحه */
+            font-family: Arial, sans-serif; /* تعیین فونت صفحه */
+        }
+
+        #map {
+            width: 600px; /* عرض نقشه */
+            height: 400px; /* ارتفاع نقشه */
+            border: 2px solid #cccccc; /* حاشیه برای نقشه */
+            border-radius: 8px; /* گوشه‌های گرد */
+        }
+
+        #info {
+            margin-top: 15px; /* فاصله بین نقشه و اطلاعات */
+            padding: 15px; /* فضای داخلی */
+            background-color: #ffffff; /* رنگ پس‌زمینه اطلاعات */
+            border-radius: 8px; /* گوشه‌های گرد */
+            max-width: 600px; /* حداکثر عرض بخش اطلاعات */
+            width: 100%; /* عرض 100 درصدی بخش */
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <img id="map" alt="Map" /> <!-- تصویر نقشه با ID 'map' -->
+        <div id="info">Click on the map to get feature info.</div> <!-- پیغام اولیه برای کاربر -->
+    </div>
+
+    <script>
+        const mapElement = document.getElementById('map'); // دسترسی به عنصر نقشه با ID 'map'
+        const infoElement = document.getElementById('info'); // دسترسی به عنصر اطلاعات با ID 'info'
+
+        mapElement.src = "http://localhost:8080/geoserver/my_project1/wms?service=WMS&version=1.1.0&request=GetMap&layers=my_project1%3AExport_Output_4&bbox=548852.0367999999%2C3595548.1259000003%2C581272.8144999999%2C3632172.8634&width=679&height=768&srs=EPSG%3A32639&styles=&format=image%2Fpng"; // بارگذاری تصویر نقشه با استفاده از URL ساخته شده
+
+        mapElement.addEventListener('click', function(event) { // افزودن یک رویداد کلیک به نقشه
+            const x = event.offsetX; // موقعیت افقی کلیک نسبت به عنصر نقشه
+            const y = event.offsetY; // موقعیت عمودی کلیک نسبت به عنصر نقشه
+
+            const featureInfoParams = "http://localhost:8080/geoserver/my_project1/wms?service=WMS&version=1.1.0&request=GetFeatureInfo&layers=my_project1%3AExport_Output_4&bbox=548852.0368%2C3595548.1259%2C581272.8145%2C3632172.8634&width=600&height=400&srs=EPSG%3A32639&format=image%2Fpng&query_layers=my_project1%3AExport_Output_4&info_format=application%2Fjson&x="+x+"&"+"y="+y;
+
+            fetch(featureInfoParams) // ارسال درخواست به URL ساخته شده
+                .then(response => response.json()) // تبدیل پاسخ به فرمت JSON
+                .then(data => { // پردازش داده‌های دریافتی
+                    if (data.features.length) { // بررسی اینکه آیا داده‌ای وجود دارد
+                        infoElement.innerHTML = JSON.stringify(data.features[0].properties, null, 2); // نمایش مشخصات ویژگی
+                    } else {
+                        infoElement.innerHTML = 'No information found at this location.'; // نمایش پیام در صورت عدم وجود داده
+                    }
+                })
+                .catch(() => { // مدیریت خطاها
+                    infoElement.innerHTML = 'Error fetching information.'; // نمایش پیام خطا
+                });
+        });
+    </script>
+</body>
+</html>
